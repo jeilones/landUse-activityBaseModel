@@ -10,7 +10,7 @@ class RandomModel(DynamicModel):
     #Creating basic land use map using the probabilities of the file LandUse, under a uniform distribution
     uni=uniform(1)
     landUses=lookupnominal('../../resources/LandUses.tbl', uni)
-    self.report(landUses, '../../src/LandUses')
+    self.report(landUses, '../../resources/LandUses')
     
     #Defining Boleean Maps
     
@@ -42,8 +42,8 @@ class RandomModel(DynamicModel):
     populationMap = residentialPopulation + industrialPopulation + agriculturalPopulation
     jobsMap = residentialJobs + industrialJobs + agriculturalJobs
     
-    self.report(populationMap, 'populationMap')
-    self.report(jobsMap, 'jobsMap')
+    self.report(populationMap, '../../resources/populationMap')
+    self.report(jobsMap, '../../resources/jobsMap')
     
     
 
