@@ -13,6 +13,32 @@ class LandUse(DynamicModel, MonteCarloModel):
     self.jobs = self.readmap('jobsMap')
     
   def initial(self):
+    #Creating basic land use map using the probabilities of the file LandUse, under a uniform distribution
+    uni=uniform(1)
+    landUses=lookupnominal('LandUses.tbl', uni)
+    self.report(landUses, 'LandUses')
+    
+    #Defining Boleean Maps
+    
+    residential = landUses == 3
+    
+    industrial = landUses == 2
+    
+    agricultural = landUses == 1
+   
+    natural= landUses == 4
+
+    self.population = ifthenelse(residential, scalar(1), 0)
+    #popArea = maptotal(populationMap) #sum the total population
+    #self.report(popArea, 'popArea') 
+    
+    self.jobs = ifthenelse(industrial, scalar(1), 0)
+    #jobArea = maptotal(jobsMap) #sum the total jobs
+    #self.report(jobArea, 'jobArea')
+    
+    self.report(self.population, 'population')
+    self.report(self.jobs, 'jobs')
+
     
     x_activity_amount = self.population + self.jobs + ifthenelse(self.landUse == 1, scalar(1), 0)
   

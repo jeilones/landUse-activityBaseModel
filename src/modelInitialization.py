@@ -14,11 +14,11 @@ class RandomModel(DynamicModel):
     
     #Defining Boleean Maps
     
-    residential = landUses == 1
+    residential = landUses == 3
     
     industrial = landUses == 2
     
-    agricultural = landUses == 3
+    agricultural = landUses == 1
    
     natural= landUses == 4
    
@@ -45,12 +45,16 @@ class RandomModel(DynamicModel):
     #populationMap = residentialPopulation + industrialPopulation #+ agriculturalPopulation
     #jobsMap = residentialJobs + industrialJobs #+ agriculturalJobs
 
-    populationMap = ifthenelse(residential, scalar(1), 0)
-    jobsMap = ifthenelse(industrial, scalar(1), 0)
+    self.population = ifthenelse(residential, scalar(1), 0)
+    #popArea = maptotal(populationMap) #sum the total population
+    #self.report(popArea, 'popArea') 
     
-    self.report(populationMap, 'populationMap')
-    self.report(jobsMap, 'jobsMap')
+    self.jobs = ifthenelse(industrial, scalar(1), 0)
+    #jobArea = maptotal(jobsMap) #sum the total jobs
+    #self.report(jobArea, 'jobArea')
     
+    self.report(self.population, 'population')
+    self.report(self.jobs, 'jobs')   
     
 
   def dynamic(self):
