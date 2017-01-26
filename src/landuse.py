@@ -9,17 +9,42 @@ class LandUse(DynamicModel, MonteCarloModel):
 
   def premcloop(self):
     self.landUse = self.readmap('LandUses')
+    self.population = self.readmap('populationMap')
+    self.jobs = self.readmap('jobsMap')
     
   def initial(self):
-    self.population = self.readmap('../../src/populationMap')
-    self.jobs = self.readmap('../../src/jobsMap')
-
+    
+    x_activity_amount = self.population + self.jobs + ifthenelse(self.landUse == 1, scalar(1), 0)
+  
   def dynamic(self):
-    self.population = self.population * 2
-    self.jobs = self.jobs * 2
+    x_activity_amount = self.population + self.jobs + ifthenelse(self.landUse == 1, scalar(1), 0)
+    #w_weight_atract_repulsion = 
+    
+    potential = x_activity_amount
 
+    self.report(x_activity_amount, 'x')
+    self.report(potential, 'potent')
+    
     self.report(self.population, 'pop')
     self.report(self.jobs, 'jobs')
+
+    isPopulation = self.population > 0
+    isJobs = self.jobs > 0
+
+    areaPop = windowtotal(scalar(isPopulation),3)
+    self.report(areaPop, 'areaPop')
+
+    weightPop = ifthenelse(isPopulation, areaPop, 0)
+    self.report(weightPop, 'w3Pop')
+
+    pop_to_jobs = isPopulation & isJobs #each cell has jobs and population activity
+    pop_to_jobs = scalar(pop_to_jobs)
+
+    self.report(pop_to_jobs, 'popjobs')
+
+    #increase activities
+    self.population = self.population * 2
+    self.jobs = self.jobs * 2
 
   def postmcloop(self):
 ##    names = ['p','snow','q']

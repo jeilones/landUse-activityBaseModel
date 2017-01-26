@@ -18,9 +18,9 @@ Base on the table rule (see src/initModel/LandUses.tbl):
 
 Where:
 
-1 referes to Residential land use
+1 referes to Agricultural land use
 2 to Industrial land use
-3 to Agricultural land use and
+3 to Residential land use and
 4 to Natural 
 
 We create our initial map call LandUse.map (see src/initModel/modelInitialization.py). As this  initial map is nominal, we need to add the legen label by typing the comand: `legend new.map`
