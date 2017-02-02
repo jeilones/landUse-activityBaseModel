@@ -17,7 +17,8 @@ class LandUse(DynamicModel, MonteCarloModel):
     self.industrial = 2
     self.residential = 3    
     self.natural = 4
-    
+    self.maxPopulationPerTimeStep = 600
+    self.maxJobsPerTimeStep = 300
     
   def initial(self):
     #Creating basic land use map using the probabilities of the file LandUse, under a uniform distribution
@@ -30,27 +31,12 @@ class LandUse(DynamicModel, MonteCarloModel):
 
     uni=uniform(1)
     self.population = lookupscalar('Population.tbl', uni)
-    #isPopulation = pop == 1
-    #self.population = ifthenelse(isPopulation, scalar(1), 0)
     self.report(self.population, 'inipop')
     
 
     uni=uniform(1)
     self.jobs = lookupscalar('Jobs.tbl', uni)
     self.report(self.jobs, 'inijobs')
-    
-    #self.population = ifthenelse(residential, scalar(1), 0)
-    #popArea = maptotal(populationMap) #sum the total population
-    #self.report(popArea, 'popArea') 
-    
-    #self.jobs = ifthenelse(industrial, scalar(1), 0)
-    #jobArea = maptotal(jobsMap) #sum the total jobs
-    #self.report(jobArea, 'jobArea')
-    
-    #self.report(self.population, 'population')
-    #self.report(self.jobs, 'jobs')
-
-    #x_activity_amount = self.population + self.jobs + self.agriculture
 
     self.x_amount_population = scalar(0)
     self.x_amount_jobs = scalar(0)
@@ -76,189 +62,84 @@ class LandUse(DynamicModel, MonteCarloModel):
     self.report(self.jobs, 'jobs')
     self.report(isAgricultural, 'agri')
     
-    #population to population weight
-    weight0 = ifthenelse(isPopulation, scalar(30), 0) #weight itself
-    weight1 = self.calculateActityWeight(isPopulation, 3, 0.25)
-    weight2 = self.calculateActityWeight(isPopulation, 5, 0.001)
-
-    wPopToPop = (weight0 + weight1 + weight2) * self.population
+    #population weights
+    wPopToPop = self.calculateTotalActityWeights(isPopulation, 30, 0.25, 0.001, 0) #population to population
     self.report(wPopToPop, 'wPPT')
-
-    popToPop = ifthenelse(isPopulation, wPopToPop, 0)
-    self.report(popToPop, 'wPPR')
-    #end population weight
-    
-    #population to jobs weight
-    weight0 = ifthenelse(isJobs, scalar(0.1), 0) #weight itself
-    weight1 = self.calculateActityWeight(isJobs, 3, 0.4)
-
-    wPopToJob = (weight0 + weight1) * self.jobs
+    wPopToJob = self.calculateTotalActityWeights(isJobs, 0.1, 0.4, 0, 0) #population to jobs
     self.report(wPopToJob, 'wPJT')
-
-    popToJob = ifthenelse(isPopulation, wPopToJob, 0)
-    self.report(popToJob, 'wPJR')
-    #end population to jobs weight
-    
-    #population to agriculture weight    
-    weight0 = scalar(0)
-    weight1 = self.calculateActityWeight(isAgricultural, 3, 3)
-    weight2 = self.calculateActityWeight(isAgricultural, 5, 0.5)
-    weight3 = self.calculateActityWeight(isAgricultural, 7, 0.25)
-
-    wPopToAgri = (weight0 + weight1 + weight2 + weight3) * self.agriculture
+    wPopToAgri = self.calculateTotalActityWeights(isAgricultural, 0, 3, 0.5, 0.25) #population to agricultural
     self.report(wPopToAgri, 'wPAT')
-
-    popToAgri = ifthenelse(isPopulation, wPopToAgri, 0)
-    self.report(popToAgri, 'wPAR')
-    #end population to agriculture weight
-
-    #jobs(activity weight) to population(map to be) weigth
-    weight0 = ifthenelse(isPopulation, scalar(0), 0) #weight itself
-    weight1 = self.calculateActityWeight(isPopulation, 3, 0.5)
-    
-    wJobsToPop = (weight0 + weight1) * self.population
+    #end population weights
+    #job weigths
+    wJobsToPop = self.calculateTotalActityWeights(isPopulation, 0, 0.5, 0, 0) #job to population
     self.report(wJobsToPop, 'wJPT')
-
-    jobsToPop = ifthenelse(isJobs, wJobsToPop, 0)
-    self.report(jobsToPop, 'wJPR')
-    #ends jobs to population weigth
-    #jobs(activity weight) to jobs(map to be) weigth
-    weight0 = ifthenelse(isJobs, scalar(20), 0) #weight itself
-    weight1 = self.calculateActityWeight(isJobs, 3, 0.45)
-
-    wJobsToJob = (weight0 + weight1) * self.jobs
+    wJobsToJob = self.calculateTotalActityWeights(isJobs, 20, 0.45, 0, 0) #job to jobs
     self.report(wJobsToJob, 'wJJT')
-
-    jobsToJob = ifthenelse(isJobs, wJobsToJob, 0)
-    self.report(jobsToJob, 'wJJR')
-    #end jobs(activity weight) to jobs(map to be) weigth
-
-    #jobs(activity weight) to agriculture(map to be) weigth
-    weight0 = ifthenelse(isAgricultural, scalar(0), 0) #weight itself
-    weight1 = self.calculateActityWeight(isAgricultural, 3, 2)
-
-    wJobsToAgri = (weight0 + weight1) * self.agriculture
+    wJobsToAgri = self.calculateTotalActityWeights(isAgricultural, 0, 2, 0, 0) #job to agricultural
     self.report(wJobsToAgri, 'wJAT')
-
-    jobsToAgri = ifthenelse(isJobs, wJobsToAgri, 0)
-    self.report(jobsToAgri, 'wJAR')
-    #ends jobs(activity weight) to jobs(map to be) weigth
+    #ends job weigths
                                                                                    
-    #agriculture(activity weight) to population(map to be) weigth
-    weight0 = ifthenelse(isPopulation, scalar(4), 0) #weight itself
-    weight1 = self.calculateActityWeight(isPopulation, 3, 1.5)
-    weight2 = self.calculateActityWeight(isPopulation, 5, 0.2)
-    weight3 = self.calculateActityWeight(isPopulation, 7, 0.1)
-
-    wAgriToPop = (weight0 + weight1 + weight2 + weight3) * self.population
+    #agriculture weigths
+    wAgriToPop = self.calculateTotalActityWeights(isPopulation, 4, 1.5, 0.2, 0.1) #agriculture to population
     self.report(wAgriToPop, 'wAPT')
-
-    agriToPop = ifthenelse(isAgricultural, wAgriToPop, 0)
-    self.report(agriToPop, 'wAPR')
-    #ends agriculture(activity weight) to population(map to be) weigth
-
-    #agriculture(activity weight) to jobs(map to be) weigth
-    weight0 = scalar(0)
-    weight1 = self.calculateActityWeight(isJobs, 3, 2)
-
-    wAgriToJob = (weight0 + weight1) * self.jobs
+    wAgriToJob = self.calculateTotalActityWeights(isJobs, 0, 2, 0, 0) #agriculture to jobs
     self.report(wAgriToJob, 'wAJT')
-
-    agriToJob = ifthenelse(isAgricultural, wAgriToJob, 0)
-    self.report(agriToJob, 'wAJR')
-    #ends agriculture(activity weight) to jobs(map to be) weigth
-
-    #agriculture(activity weight) to agriculture(map to be) weigth
-    weight0 = ifthenelse(isAgricultural, scalar(300), 0) #weight itself
-    self.report(weight0, 'wAA0')
-
-    weight1 = self.calculateActityWeight(isAgricultural, 3, 5)
-    self.report(weight1, 'wAA1')
-
-    wAgriToAgri = (weight0 + weight1) * self.agriculture
+    wAgriToAgri = self.calculateTotalActityWeights(isAgricultural, 300, 5, 0, 0) #agriculture to agriculture
     self.report(wAgriToAgri, 'wAAT')
-
-    agriToAgri = ifthenelse(isAgricultural, wAgriToAgri, 0)
-    self.report(agriToAgri, 'wAAR')
-    #ends agriculture(activity weight) to agriculture(map to be) weigth
+    #ends agriculture weigths
 
     ##TOTAL Weights
     wPopulation = wPopToPop + wPopToJob + wPopToAgri
+    self.report(wPopulation, 'callPop')
     wJobs = wJobsToPop + wJobsToJob + wJobsToAgri
+    self.report(wJobs, 'callJob')
     wAgriculture = wAgriToPop + wAgriToJob + wAgriToAgri
-    ##
-
-    ########################################################
-    c_populationToNatural = ifthenelse(isNatural, scalar(0.6), 0)
-    c_populationToResidential = ifthenelse(isResidential, scalar(1.0), 0)
-    c_populationToIndustrial = ifthenelse(isIndustrial, scalar(0.4), 0)
-    c_populationToAgricultural = ifthenelse(isAgricultural, scalar(0.7), 0)
-
-
-    c_jobsToNatural = ifthenelse(isNatural, scalar(0.5), 0)
-    c_jobsToResidential = ifthenelse(isResidential, scalar(0.7), 0)
-    c_jobsToIndustrial = ifthenelse(isIndustrial, scalar(1.0), 0)
-    c_jobsToAgricultural = ifthenelse(isAgricultural, scalar(0.7), 0)
-    ########################################################
+    self.report(wAgriculture, 'callAgri')
 
     ##POTENTIAL OF POPULATION ACTIVITY
-    e_pop_diseconomies = self.diseconomies(wPopulation)
-    c_population = c_populationToNatural + c_populationToResidential + c_populationToIndustrial + c_populationToAgricultural
-    
-    populationPotential = c_population * self.nonNegativePotential(wPopulation + e_pop_diseconomies)
-
-      #self.x_amount_population = (populationPotential / windowtotal(populationPotential, 7))
-    self.x_amount_population = populationPotential
+    populationPotential = self.calculatePotential(wPopulation)
+    self.x_amount_population = self.maxPopulationPerTimeStep * populationPotential 
     
     self.report(populationPotential, 'popPot')
     self.report(self.x_amount_population, 'x_pop')
     ##END
 
     ##POTENTIAL OF JOB ACTIVITY
-    e_job_diseconomies = self.diseconomies(wJobs)
-    c_jobs = c_jobsToNatural + c_jobsToResidential + c_jobsToIndustrial + c_jobsToAgricultural
-    
-    jobsPotential = c_jobs * self.nonNegativePotential(wJobs + e_job_diseconomies)
-
-      #self.x_amount_jobs = (jobsPotential / windowtotal(jobsPotential, 7))
-    self.x_amount_jobs = jobsPotential
-    
-    self.report(jobsPotential, 'jobPot')
-    self.report(self.x_amount_jobs, 'x_job')
-    ##END OF POTENTIAL OF JOB ACTIVITY
+    jobPotential = self.calculatePotential(wJobs)
+    self.x_amount_jobs = self.maxJobsPerTimeStep * jobPotential
+    ##END POTENTIAL OF JOB ACTIVITY
 
     ##POTENTIAL OF AGRICULTURE ACTIVITY
-    self.agriculturePotential = self.nonNegativePotential(wAgriculture)
-    
-    self.report(self.agriculturePotential, 'agriPot')
-    ##END OF POTENTIAL OF AGRICULTURE ACTIVITY
-    
+    self.agriculturePotential = self.calculatePotential(wAgriculture)
+    self.x_amount_agriculture = self.agriculturePotential
+    ##END POTENTIAL OF AGRICULTURE ACTIVITY
 
-    #naturalCoeficient = ifthenelse(self.land)
-
-##    self.residential = 3
-##    self.industrial = 2
-##    self.agricultural = 1
-##    self.natural = 4 
-
+    ##WRITE NEW LAND USE
     self.landUses = self.newLandUse(self.population, self.jobs, self.agriculture)    
     self.report(self.landUses, 'LandUses')
 
-    #increase activities
-    self.population = ifthenelse(isPopulation, self.population + 1, 0)
-    self.jobs = ifthenelse(isJobs, self.jobs + 1, 0)
-
   def postmcloop(self):
-##    names = ['p','snow','q']
-##    sampleNumbers = range(1,13)
-##    timeSteps = range(1,182)
-##    #percentiles = [0.025,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.975]
-##    percentiles=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-##    mcaveragevariance(names,sampleNumbers,timeSteps)
-##    mcpercentiles(names,percentiles,sampleNumbers,timeSteps)
     pass
+  
+  def calculatePotential(self, activityWeightMap):
+    potential = ifthenelse(activityWeightMap > 3, scalar(0.2),
+                                     ifthenelse(activityWeightMap > 10, scalar(0.3),
+                                                ifthenelse(activityWeightMap > 40, scalar(0.5), 0)))
 
+    return potential
+
+  def calculateTotalActityWeights(self, booleanActivityMap, level0, level1, level2, level3):
+    weight0 = ifthenelse(booleanActivityMap, scalar(level0), 0) #weight itself
+    weight1 = self.calculateActityWeight(booleanActivityMap, 3, level1)
+    weight2 = self.calculateActityWeight(booleanActivityMap, 5, level2)
+    weight3 = self.calculateActityWeight(booleanActivityMap, 7, level3)
+
+    return weight0 + weight1 + weight2 + weight3
+  
   def calculateActityWeight(self, booleanActivityMap, distance, weight):
+    if(weight == 0):
+      return scalar(0)
+    
     level = distance - 2 # minus 2 cells
 
     activityWeight = ifthenelse(booleanActivityMap, scalar(weight), 0)
@@ -270,70 +151,40 @@ class LandUse(DynamicModel, MonteCarloModel):
     return weightMap
 
   def newLandUse(self, populationActivityAmount, jobsActivityAmount, agricultureActivityAmount):
-    threshold = 20
-    newLandUse = ifthenelse(populationActivityAmount > jobsActivityAmount, 
-		ifthenelse(populationActivityAmount > agricultureActivityAmount, 
-			ifthenelse(populationActivityAmount > threshold,
-					nominal(self.residential),
-					nominal(self.natural) ), 
-			ifthenelse(agricultureActivityAmount > threshold,
-					nominal(self.agricultural),
-					nominal(self.natural))
-		), 
-		ifthenelse(jobsActivityAmount > agricultureActivityAmount, 
-			ifthenelse(jobsActivityAmount > threshold,
-					nominal(self.industrial),
-					nominal(self.natural) 
-			), 
-			ifthenelse(populationActivityAmount > agricultureActivityAmount, 
-				ifthenelse(populationActivityAmount > threshold,
-						nominal(self.residential),
-						nominal(self.natural) 
-				), 
-				ifthenelse(agricultureActivityAmount > threshold,
-						nominal(self.agricultural),
-						nominal(self.natural)
-				)
-			)
-		)
-	)
+    thresholdIndustrial = 0.9 * mapmaximum(populationActivityAmount)
+    thresholdResidentialMin = 0.7 * mapmaximum(populationActivityAmount)
+    thresholdResidentialMax = thresholdIndustrial
+    thresholdAgricultureMin = 0.1 * mapmaximum(populationActivityAmount)
+    thresholdAgricultureMax = thresholdResidentialMin
 
-    isResidential = (newLandUse == self.residential) | (self.landUses == self.residential)
-    isIndustrial = (newLandUse == self.industrial) | (self.landUses == self.industrial)
-    isAgricultural = (newLandUse == self.agricultural) | (self.landUses == self.agricultural)
-    isNatural = (newLandUse == self.natural) | (self.landUses == self.natural)
-
-    otracosa = (newLandUse == self.industrial) | (newLandUse == self.agricultural) | (newLandUse == self.natural)
-    isResidential = (newLandUse == self.residential) | ((self.landUses == self.residential) & pcrnot(otracosa))
-    otracosa = (newLandUse == self.residential) | (newLandUse == self.agricultural) | (newLandUse == self.natural)
-    isIndustrial = (newLandUse == self.industrial) | ((self.landUses == self.industrial) & pcrnot(otracosa))
-    otracosa = (newLandUse == self.residential) | (newLandUse == self.industrial) | (newLandUse == self.natural)
-    isAgricultural = (newLandUse == self.agricultural) | ((self.landUses == self.agricultural) & pcrnot(otracosa))
-    otracosa = (newLandUse == self.residential) | (newLandUse == self.industrial) | (newLandUse == self.agricultural)
-    isNatural = (newLandUse == self.natural) | ((self.landUses == self.natural) & pcrnot(otracosa))
-    
-
-##    isResidential = (newLandUse == self.residential) & pcrnot((self.landUses == self.industrial) | (self.landUses == self.natural) | (self.landUses == self.agricultural))
-##    isIndustrial = (newLandUse == self.industrial) & pcrnot((self.landUses == self.residential) | (self.landUses == self.natural) | (self.landUses == self.agricultural))
-##    isAgricultural = (newLandUse == self.agricultural) & pcrnot((self.landUses == self.residential) | (self.landUses == self.natural) | (self.landUses == self.industrial))
-##    isNatural = (newLandUse == self.natural) & pcrnot((self.landUses == self.residential) | (self.landUses == self.agricultural) | (self.landUses == self.industrial))
-
-    #newLandUse = ifthenelse(self.landUses != newLandUse, newLandUse, self.landUses)
-
-    newLandUse = nominal(ifthenelse(isResidential, scalar(self.residential), 0) + ifthenelse(isIndustrial, scalar(self.industrial), 0) + ifthenelse(isAgricultural, scalar(self.agricultural), 0) + ifthenelse(isNatural, scalar(self.natural), 0))
-    
+    newLandUse = ifthenelse(populationActivityAmount > thresholdIndustrial,
+                            nominal(self.industrial),
+                            ifthenelse((populationActivityAmount < thresholdResidentialMax) & (populationActivityAmount > thresholdResidentialMin),
+                                       nominal(self.residential),
+                                       ifthenelse((populationActivityAmount < thresholdAgricultureMax) & (populationActivityAmount > thresholdAgricultureMin),
+                                                  nominal(self.agricultural),
+                                                  nominal(self.natural)
+                                                  )
+                                       )
+                            )    
     return newLandUse
 
-  def nonNegativePotential(self, potMap):
-    newMap = ln(scalar(1) + scalar(2) ** potMap)
+  def nonNegativePotential(self, maxIncrement,potMap):
+    #noZeros = max(scalar(2) ** potMap, 0.0001)
+    #self.report(noZeros, 'noZeros')
+    #newMap = self.maxPopulationPerTimeStep * (1 ** ln(scalar(1) + potMap))
+    newMap =  self.maxPopulationPerTimeStep * uniform(1)
     return newMap
 
   def diseconomies(self, totalWeights):
     # -1 < y1 < 0
     # y2 > 1
-    y1 = -1
+    y1 = 0.1
     y2 = 1.1
-    diseconomies = y1 * totalWeights ** y2
+    #diseconomies = y1 * totalWeights #** y2
+    random = uniform(1)
+    diseconomies = totalWeights * ifthenelse(random < 0.5, random * -1, random)
+    
     return diseconomies
   
 #nrOfTimeSteps=181
