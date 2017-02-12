@@ -71,25 +71,25 @@ class LandUse(DynamicModel, MonteCarloModel):
     
     #population weights
     wPopToPop = self.calculateTotalActityWeights(isPopulation, 30, 0.25, 0.001, 0) #population to population
-    wPopToJob = self.calculateTotalActityWeights(isJobs, 0.1, 0.4, 0, 0) #population to jobs
-    wPopToAgri = self.calculateTotalActityWeights(isAgricultural, 0, 3, 0.5, 0.25) #population to agricultural
+    wPopToJob = self.calculateTotalActityWeights(isPopulation, 0.1, 0.4, 0, 0) #population to jobs
+    wPopToAgri = self.calculateTotalActityWeights(isPopulation, 0, 3, 0.5, 0.25) #population to agricultural
     #end population weights
     #job weigths
-    wJobsToPop = self.calculateTotalActityWeights(isPopulation, 0, 0.5, 0, 0) #job to population
+    wJobsToPop = self.calculateTotalActityWeights(isJobs, 0, 0.5, 0, 0) #job to population
     wJobsToJob = self.calculateTotalActityWeights(isJobs, 20, 0.45, 0, 0) #job to jobs
-    wJobsToAgri = self.calculateTotalActityWeights(isAgricultural, 0, 2, 0, 0) #job to agricultural
+    wJobsToAgri = self.calculateTotalActityWeights(isJobs, 0, 2, 0, 0) #job to agricultural
     #ends job weigths
                                                                                    
     #agriculture weigths
-    wAgriToPop = self.calculateTotalActityWeights(isPopulation, 4, 1.5, 0.2, 0.1) #agriculture to population
-    wAgriToJob = self.calculateTotalActityWeights(isJobs, 0, 2, 0, 0) #agriculture to jobs
+    wAgriToPop = self.calculateTotalActityWeights(isAgricultural, 4, 1.5, 0.2, 0.1) #agriculture to population
+    wAgriToJob = self.calculateTotalActityWeights(isAgricultural, 0, 2, 0, 0) #agriculture to jobs
     wAgriToAgri = self.calculateTotalActityWeights(isAgricultural, 300, 5, 0, 0) #agriculture to agriculture
     #ends agriculture weigths
 
     ##TOTAL Weights
-    wPopulation = wPopToPop + wPopToJob + wPopToAgri
-    wJobs = wJobsToPop + wJobsToJob + wJobsToAgri
-    wAgriculture = wAgriToPop + wAgriToJob + wAgriToAgri
+    wPopulation = wPopToPop + wJobsToPop + wAgriToPop
+    wJobs = wPopToJob + wJobsToJob + wAgriToJob
+    wAgriculture = wPopToAgri + wJobsToAgri + wAgriToAgri
     
     self.report(wPopulation, 'callPop')
     self.report(wJobs, 'callJob')
@@ -168,7 +168,7 @@ class LandUse(DynamicModel, MonteCarloModel):
     return newLandUse
   
 #nrOfTimeSteps=181
-nrOfTimeSteps=500
+nrOfTimeSteps=999
 #nrOfSamples=50
 nrOfSamples=1
 myModel = LandUse()
