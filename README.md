@@ -26,3 +26,11 @@ Where:
 We create our initial map call LandUse.map (see src/initModel/modelInitialization.py). As this  initial map is nominal, we need to add the legen label by typing the comand: `legend new.map`
 
 ![Alt text](images/addLegendsToNominalMap.png?raw=true "Adding legends")
+
+# Running the model
+
+To run the model you have to open your console and navigate to your program folder and type:
+
+`aguila --timesteps=[1,999,1] --scenarios='{1,2,3}' --multi=2x2 pop jobs LandUses`
+
+![Alt text](images/running-the-model.png?raw=true "Command to run the model")

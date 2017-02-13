@@ -175,7 +175,7 @@ class LandUse(DynamicModel, MonteCarloModel):
     return newLandUse
   
 nrOfTimeSteps=999
-nrOfSamples=1
+nrOfSamples=3
 myModel = LandUse()
 dynamicModel = DynamicFramework(myModel, nrOfTimeSteps)
 mcModel = MonteCarloFramework(dynamicModel, nrOfSamples)
